@@ -14,6 +14,7 @@ class Tracker:
         cv2.namedWindow("window1", 1)
         cv2.namedWindow("window2", 1)
         self.image_sb = rospy.Subscriber('/usb_cam/image_raw', Image, self.image_callback)
+        self.init_size=0.0
 
     def image_callback(self, msg):
         size=0
@@ -39,15 +40,16 @@ class Tracker:
 
     
         for cnt in contours:
-
             x,y,w,h = cv2.boundingRect(cnt)
             x=x+w/2
             x=x-width/2
-            size=max(w,h)
+	    size=float(max(w,h))
+            if self.init_size==0:
+                self.init_size=size
+            size=size/self.init_size
             print x,y,w,h
             print size
-
-            
+                        
         #Control Code Here  
 
         cv2.imshow("window1", image)
