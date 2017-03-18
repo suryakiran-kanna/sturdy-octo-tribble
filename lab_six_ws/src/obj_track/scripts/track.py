@@ -14,37 +14,41 @@ class Tracker:
         cv2.namedWindow("window1", 1)
         cv2.namedWindow("window2", 1)
         self.image_sb = rospy.Subscriber('/usb_cam/image_raw', Image, self.image_callback)
-        self.init_size=0
 
     def image_callback(self, msg):
         size=0
-        offset=0
+        x=0
+	y=0
+	w=0
+	h=0        
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
         height, width, channels = image.shape
-        ymin=width
-        ymax=0
-        size=0
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         pinkLower = np.array([150, 50, 50], np.uint8)
         pinkUpper = np.array([175, 255, 255], np.uint8)
+        #pinkLower = np.array([29, 86, 6], np.uint8)
+        #pinkUpper = np.array([64, 255, 255], np.uint8)
         mask = cv2.inRange(hsv, pinkLower, pinkUpper)
         mask = cv2.erode(mask, None, iterations=3)
-        mask = cv2.dilate(mask, None, iterations=3)
+        mask = cv2.dilate(mask, None, iterations=2)
         masked = cv2.bitwise_and(image, image, mask=mask)
+        gray=cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
 
-        for i in range(0, height-1):
-            for j in range(0,width-1):
-	        if mask[i,j]==255:
-                    size=size+1
-	            if j<ymin:
-	                ymin=j
-                    if j>ymax:
-		        ymax=j
+        contours, hierarchy = cv2.findContours(gray,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    
 
-        offset=ymin+((ymax-ymin)/2)-width/2
-        if self.init_size==0:
-            self.init_size=size
-        size=size/self.init_size
+    
+        for cnt in contours:
+
+            x,y,w,h = cv2.boundingRect(cnt)
+            x=x+w/2
+            x=x-width/2
+            size=max(w,h)
+            print x,y,w,h
+            print size
+
+            
+        #Control Code Here  
 
         cv2.imshow("window1", image)
         cv2.imshow("window2", masked)
