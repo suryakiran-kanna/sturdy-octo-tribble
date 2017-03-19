@@ -3,8 +3,13 @@
   <param name="angular/z/max_jerk" value="0.1" />
   <param name="angular/z/max_acceleration" value="0.1" />
   <param name="angular/z/min_acceleration" value="-0.1" />
-  <param name="has_acceleration_limits" value="true" />
-  <param name="has_jerk_limits" value="true" />
+  <param name="angular/z/has_acceleration_limits" value="true" />
+  <param name="angular/z/has_jerk_limits" value="true" />
+  <param name="linear/x/max_jerk" value="0.1" />
+  <param name="linear/x/max_acceleration" value="0.1" />
+  <param name="linear/x/min_acceleration" value="-0.1" />
+  <param name="linear/x/has_acceleration_limits" value="true" />
+  <param name="linear/x/has_jerk_limits" value="true" />
 
   <!-- replay-->
   <node pkg="obj_track" type="track.py" name="tracker" required="true" />

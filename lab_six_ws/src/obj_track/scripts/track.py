@@ -133,6 +133,9 @@ class Tracker:
                         #      self.twist.angular.z = 0
                         #      self.cmd_vel_pub.publish(self.twist)
                         #def smooth_vel(vel_before, vel_final, t_before, t_final, rate):
+                else:
+		    self.count=0
+
                 if size > maxSizeThresh or size < minSizeThresh:
                     tgt_lin_prop_vel = 0
                     self.lin_count= self.lin_count + 1
@@ -151,6 +154,8 @@ class Tracker:
                          rospy.loginfo('tgt_prop_vel: %.2f'%tgt_lin_prop_vel)
                          rospy.loginfo('ang_vel_before: %.2f'% self.ang_vel_before)
                          #self.cmd_vel_pub.publish(self.twist)
+                else:
+		    self.lin_count=0
 
 
         self.cmd_vel_pub.publish(self.twist)
