@@ -141,9 +141,10 @@ class Tracker:
                          self.lin_count = 0
                          rospy.loginfo('Proportional Gain Lin vel: %.2d'%size)
                          if size > 1:
-                            tgt_lin_prop_vel = -float(size)/2
+                            tgt_lin_prop_vel = -float(size-1)/2 #####
                          else:
-                            tgt_lin_prop_vel = -float(size)/2
+				#######
+                             tgt_lin_prop_vel = float(1-size)/2 ########
 
                          self.twist.linear.x = tgt_lin_prop_vel
 
