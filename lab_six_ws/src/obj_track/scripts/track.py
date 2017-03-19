@@ -57,10 +57,11 @@ class Tracker:
         frameCenter = width/2
         rospy.loginfo ('frameCenter: %.2d' %frameCenter)
 
-        maxleftHysThresh = (frameCenter - 0.20 * frameCenter)-frameCenter
-        maxrightHysThresh = (frameCenter + 0.20 * frameCenter)-frameCenter
+        maxleftHysThresh = (frameCenter - 0.10 * frameCenter)-frameCenter
+        maxrightHysThresh = (frameCenter + 0.10 * frameCenter)-frameCenter
         rospy.loginfo('maxleftHysThresh: %.2d'%maxleftHysThresh)
         rospy.loginfo('maxrightHysThresh: %.2d'% maxrightHysThresh)
+
 
         contours, hierarchy = cv2.findContours(gray,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
@@ -77,18 +78,19 @@ class Tracker:
 
             #Control Code Here
             rospy.loginfo('Xerror: %.2d'%x)
-            
+
             if x > maxrightHysThresh or x < maxleftHysThresh:
                 self.count= self.count + 1
                 if self.count > 5:
                      #rotate
                      self.count = 0
-                     self.twist.angular.z = -float(x)/100
+                     rospy.loginfo('Angular Velocity: %.2d'%x)
+                     self.twist.angular.z = -float(x)/200
                      self.cmd_vel_pub.publish(self.twist)
-                     if x <= maxrightHysThresh or x>=maxleftHysThresh:
-                         rospy.loginfo('In ang vel 0 if')
-                         self.twist.angular.z = 0
-                         self.cmd_vel_pub.publish(self.twist)
+                    #  if x <= rightXError or x>=leftXError:
+                    #      rospy.loginfo('In ang vel 0 if')
+                    #      self.twist.angular.z = 0
+                    #      self.cmd_vel_pub.publish(self.twist)
 
 
 
