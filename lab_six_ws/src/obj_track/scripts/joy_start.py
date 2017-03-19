@@ -32,21 +32,22 @@ class joy_control(object):
         
         
         rospy.loginfo("In start")
-
+	package = 'obj_track'
+        executable = 'track.py'
+	node = roslaunch.core.Node(package, executable)
+        launch = roslaunch.scriptapi.ROSLaunch()
+	launch.start()
+	process = launch.launch(node)
         while not rospy.is_shutdown():
             if (self.trigger == True):
-                
-                package = 'obj_track'
-                executable = 'track.py'
                 if self.track == 1:
-               	    rospy.loginfo("Starting tracking node")
-    	            #node = roslaunch.core.Node(package, executable)
-                    #launch = roslaunch.scriptapi.ROSLaunch()
-                    #launch.start()
-                    #track_process = launch.launch(node)
-                if self.track == 0:
-               	    rospy.loginfo("Stopping tracking node")
-               	    #track_process.stop()
+		    if process.is_alive():
+               	        rospy.loginfo("Starting tracking node")
+			#process = launch.launch(node)
+		else:
+		    if ~(process.is_alive()):
+               	    	rospy.loginfo("Stopping tracking node")
+               	    	#process.stop()
 	    self.trigger=False
 
     def joy_callback(self, data):
@@ -60,7 +61,7 @@ class joy_control(object):
 	    self.track = 1
 	if (x == 1):
             rospy.loginfo("Turning off tracking")
-	    self.trigger = False
+	    self.trigger = True
 	    self.track = 0
 
 if __name__ == "__main__":
