@@ -101,14 +101,8 @@ class Tracker:
                     if self.count > 5:
                          #rotate
                          self.count = 0
-                         self.twist.angular.z = -float(x)/100
+                         self.twist.angular.z = -float(x)/200
                          self.cmd_vel_pub.publish(self.twist)
-                         if x <= maxrightHysThresh or x>=maxleftHysThresh:
-                             rospy.loginfo('In ang vel 0 if')
-                             self.twist.angular.z = 0
-                             self.cmd_vel_pub.publish(self.twist)
-
-
 
         cv2.imshow("window1", image)
         cv2.imshow("window2", masked)
