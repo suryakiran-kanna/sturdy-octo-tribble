@@ -18,13 +18,13 @@ def smooth_vel(vel_before, vel_final, t_before, t_final, rate):
     step = rate*(t_final-t_before)
     sign = 1.0 if (vel_final > vel_before) else -1.0
     error =	math.fabs(vel_final - vel_before)
-    rospy.loginfo('in smooth_vel: error %.2d'%error)
+    rospy.loginfo('in smooth_vel: error %.2f'%error)
     if error < step:
-        rospy.loginfo('vel_final %.2d'%vel_final)
+        rospy.loginfo('vel_final %.2f'%vel_final)
         return vel_final
     else:
         step_vel = vel_before + sign * step
-        rospy.loginfo('stepped vel: %.2d'%step_vel)
+        rospy.loginfo('stepped vel: %.2f'%step_vel)
         return vel_before + sign * step
 
 class Tracker:
@@ -43,10 +43,9 @@ class Tracker:
         self.count = 0
         self.lin_count = 0
         self.inital_time = time.time()
-        self.rate_step = 0.015
+        self.rate_step = 0.015 #0.15
         self.ang_vel_before = 0.0
-
-
+        self.lin_vel_before = 0.0
 
     # joy stick feature
     def joy_callback(self, data):
@@ -84,8 +83,8 @@ class Tracker:
         if (self.track == 1) :
             frameCenter = width/2
             rospy.loginfo ('frameCenter: %.2d' %frameCenter)
-            maxleftHysThresh = (frameCenter - 0.10 * frameCenter)-frameCenter
-            maxrightHysThresh = (frameCenter + 0.10 * frameCenter)-frameCenter
+            maxleftHysThresh = (frameCenter - 0.20 * frameCenter)-frameCenter
+            maxrightHysThresh = (frameCenter + 0.20 * frameCenter)-frameCenter
             rospy.loginfo('maxleftHysThresh: %.2d'%maxleftHysThresh)
             rospy.loginfo('maxrightHysThresh: %.2d'% maxrightHysThresh)
             contours, hierarchy = cv2.findContours(gray,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
@@ -114,56 +113,49 @@ class Tracker:
                     if self.count > 5:
                          #rotate
                          #self.count = 0
-                         rospy.loginfo('Proportional Gain: %.2d'%x)
-                         tgt_prop_vel = -float(x)/200
+                         rospy.loginfo('Proportional Gain: %.2f'%x)
+                         tgt_prop_vel = -float(x)/300
                          rospy.loginfo('tgt_prop_vel: %.2f'%tgt_prop_vel)
                          rospy.loginfo('ang_vel_before: %.2f'% self.ang_vel_before)
 
-                         if not (tgt_prop_vel ==  self.ang_vel_before):
+                         while not (tgt_prop_vel ==  self.ang_vel_before):
                              rospy.loginfo('In smooth vel if');
                              ang_vel = smooth_vel(self.ang_vel_before, tgt_prop_vel, self.inital_time, time.time(), self.rate_step )
                              self.twist.angular.z = ang_vel
                              self.ang_vel_before = ang_vel
                              self.cmd_vel_pub.publish(self.twist)
-                             rospy.loginfo('ang_vel_before before next iteration: %.2f'% self.ang_vel_before) 
-                         #else:
-                            #tgt_prop_vel = ang_vel_before
-                            #self.cmd_vel_pub.publish(self.twist)
-
-                        #  if x <= rightXError or x>=leftXError:
-                        #      rospy.loginfo('In ang vel 0 if')
-                        #      self.twist.angular.z = 0
-                        #      self.cmd_vel_pub.publish(self.twist)
-                        #def smooth_vel(vel_before, vel_final, t_before, t_final, rate):
-               	    
+                             rospy.loginfo('ang_vel_before before next iteration: %.2f'% self.ang_vel_before)
 
                 elif size > maxSizeThresh or size < minSizeThresh:
                     self.count=0
-		    self.twist.angular.z =0
+                    self.twist.angular.z =0
                     tgt_lin_prop_vel = 0
                     self.lin_count= self.lin_count + 1
                     if self.lin_count > 5:
-                        #rotate
-                        #self.lin_count = 0
-                        rospy.loginfo('Proportional Gain Lin vel: %.2d'%size)
+                        rospy.loginfo('Proportional Gain Lin vel: %.2f'%size)
                         if size > 1:
                            tgt_lin_prop_vel = -float(size-1)/2 #####
+                           if tgt_lin_prop_vel > 0.3:
+                               tgt_lin_prop_vel = tgt_lin_prop_vel - 0.50 * tgt_lin_prop_vel
                         else:
-			#######
-                            tgt_lin_prop_vel = float(1-size)*1.5 ########
+                            tgt_lin_prop_vel = float(1-size)
+                            if tgt_lin_prop_vel > 0.3:
+                                tgt_lin_prop_vel = tgt_lin_prop_vel - 0.50 * tgt_lin_prop_vel
 
-                        self.twist.linear.x = tgt_lin_prop_vel
+                        while not (tgt_lin_prop_vel ==  self.lin_vel_before):
+                            rospy.loginfo('In smooth vel if for Linear');
+                            lin_vel = smooth_vel(self.lin_vel_before, tgt_lin_prop_vel, self.inital_time, time.time(), self.rate_step )
+                            self.twist.linear.x = lin_vel
+                            self.lin_vel_before = lin_vel
+                            self.cmd_vel_pub.publish(self.twist)
+                            rospy.loginfo('lin_vel_before before next iteration: %.2f'% self.lin_vel_before)
 
                         rospy.loginfo('tgt_prop_vel: %.2f'%tgt_lin_prop_vel)
                         rospy.loginfo('ang_vel_before: %.2f'% self.ang_vel_before)
                         self.cmd_vel_pub.publish(self.twist)
                 else:
-		    self.lin_count=0
+                    self.lin_count=0
                     self.count=0
-
-
-                #self.cmd_vel_pub.publish(self.twist)
-
         cv2.imshow("window1", image)
         cv2.imshow("window2", masked)
         cv2.waitKey(3)
