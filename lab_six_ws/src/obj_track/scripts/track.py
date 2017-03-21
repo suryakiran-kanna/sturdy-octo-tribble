@@ -26,8 +26,8 @@ from sensor_msgs.msg import Joy
 def smooth_vel(vel_before, vel_final, t_before, t_final, rate):
     rospy.loginfo('in smooth_vel')
     print vel_before, vel_final, t_before, t_final, rate
-    step = rate*(t_final-t_before)
-    sign = 1.0 if (vel_final > vel_before) else -1.0
+    step = rate#*(t_final-t_before)
+    sign = 1.0 if (vel_final > vel_before) else -3.0
     error =	math.fabs(vel_final - vel_before)
     rospy.loginfo('in smooth_vel: error %.2f'%error)
     if error < step:
@@ -54,10 +54,12 @@ class Tracker:
         self.count = 0
         self.lin_count = 0
         self.inital_time = time.time()
-        self.rate_step = 0.015 #0.15
+        self.rate_step = 0.005 #0.15
         self.ang_vel_before = 0.0
         self.lin_vel_before = 0.0
+        self.size_before = 0.0
 
+    # joy stick feature
     def joy_callback(self, data):
 
         x, circ, sq, tri, L1, R1, share, options, p4, L3, R3, DL, DR, DU, DD = data.buttons
@@ -90,7 +92,6 @@ class Tracker:
         masked = cv2.bitwise_and(image, image, mask=mask)
         gray=cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
 
-        # joy stick feature
         if (self.track == 1) :
             frameCenter = width/2
             rospy.loginfo ('frameCenter: %.2d' %frameCenter)
@@ -107,6 +108,8 @@ class Tracker:
                 if self.init_size==0:
                     self.init_size=size
                 size=size/self.init_size
+                if self.size_before==0:
+                    self.size_before=size
                 print x,y,w,h
                 print size
 
@@ -116,14 +119,13 @@ class Tracker:
                 maxSizeThresh = 1.10
                 minSizeThresh = 0.95
 
-
+                print(abs(self.size_before-size)<=0.50)
+                print(self.size_before)
                 if x > maxrightHysThresh or x < maxleftHysThresh:
                     self.lin_count=0
                     self.twist.linear.x=0
                     self.count= self.count + 1
                     if self.count > 5:
-                         #rotate
-                         #self.count = 0
                          rospy.loginfo('Proportional Gain: %.2f'%x)
                          tgt_prop_vel = -float(x)/300
                          rospy.loginfo('tgt_prop_vel: %.2f'%tgt_prop_vel)
@@ -137,21 +139,18 @@ class Tracker:
                              self.cmd_vel_pub.publish(self.twist)
                              rospy.loginfo('ang_vel_before before next iteration: %.2f'% self.ang_vel_before)
 
-                elif size > maxSizeThresh or size < minSizeThresh:
+                elif (abs(self.size_before-size)<=0.50  and (size > maxSizeThresh or size < minSizeThresh)):
+                    self.size_before=size
                     self.count=0
                     self.twist.angular.z =0
                     tgt_lin_prop_vel = 0
                     self.lin_count= self.lin_count + 1
-                    if self.lin_count > 5:
+                    if self.lin_count > 1:
                         rospy.loginfo('Proportional Gain Lin vel: %.2f'%size)
                         if size > 1:
-                           tgt_lin_prop_vel = -float(size-1)/2 #####
-                           if tgt_lin_prop_vel > 0.3:
-                               tgt_lin_prop_vel = tgt_lin_prop_vel - 0.50 * tgt_lin_prop_vel
+                           tgt_lin_prop_vel = max(-float(size-1)/2,-0.3)
                         else:
-                            tgt_lin_prop_vel = float(1-size)
-                            if tgt_lin_prop_vel > 0.3:
-                                tgt_lin_prop_vel = tgt_lin_prop_vel - 0.50 * tgt_lin_prop_vel
+                            tgt_lin_prop_vel = min(float(1-size),0.3)
 
                         while not (tgt_lin_prop_vel ==  self.lin_vel_before):
                             rospy.loginfo('In smooth vel if for Linear');
