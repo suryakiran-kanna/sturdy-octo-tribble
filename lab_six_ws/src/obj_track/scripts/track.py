@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+# Intro to Robotics - EE5900 - Spring 2017
+#       Project #6 Group #1
+#	James Rawill
+#	Roger Gomes
+#	Surya Kiran Chittiboyana(Team Lead)
+
+# Subscribes from usb_cam and publishes to cmd_vel
+
+
 import rospy
 from sensor_msgs.msg import Image
 import cv2
@@ -47,7 +56,6 @@ class Tracker:
         self.ang_vel_before = 0.0
         self.lin_vel_before = 0.0
 
-    # joy stick feature
     def joy_callback(self, data):
 
         x, circ, sq, tri, L1, R1, share, options, p4, L3, R3, DL, DR, DU, DD = data.buttons
@@ -80,6 +88,7 @@ class Tracker:
         masked = cv2.bitwise_and(image, image, mask=mask)
         gray=cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
 
+        # joy stick feature
         if (self.track == 1) :
             frameCenter = width/2
             rospy.loginfo ('frameCenter: %.2d' %frameCenter)
