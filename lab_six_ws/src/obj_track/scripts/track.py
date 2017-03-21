@@ -6,7 +6,9 @@
 #	Surya Kiran Chittiboyana(Team Lead)
 
 # Subscribes from usb_cam and publishes to cmd_vel
-
+# Tracks the bright pink object from neutral background. 
+# Starts tracking upon pressing "circle" button on PS3 controller and stops
+# when "X" button is pressed.
 
 import rospy
 from sensor_msgs.msg import Image
